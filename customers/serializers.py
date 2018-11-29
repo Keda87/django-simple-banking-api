@@ -5,6 +5,15 @@ from rest_framework import serializers
 from customers.models import Customer
 
 
+class SimpleUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'email', 'username', 'first_name', 'last_name',
+        ]
+
+
 class CustomerSignUpSerializer(serializers.Serializer):
     first_name = serializers.CharField(write_only=True)
     last_name = serializers.CharField(write_only=True)
@@ -22,7 +31,7 @@ class CustomerSignUpSerializer(serializers.Serializer):
 
 class CustomerSerializer(CustomerSignUpSerializer,
                          serializers.ModelSerializer):
-    address = serializers.CharField()
+    user = SimpleUserSerializer(read_only=True)
 
     @transaction.atomic
     def create(self, validated_data):
@@ -48,7 +57,7 @@ class CustomerSerializer(CustomerSignUpSerializer,
     class Meta:
         model = Customer
         fields = [
-            'id', 'guid', 'user', 'address', 'sex', 'identity_number',
+            'id', 'guid', 'address', 'sex', 'identity_number', 'user',
             'first_name', 'last_name', 'email', 'password',
         ]
-        read_only_fields = ['user']
+        read_only_fields = ['id', 'guid']

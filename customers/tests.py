@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIRequestFactory
@@ -29,15 +30,28 @@ class CustomerAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_register_customer_with_email_taken(self):
-        self.test_register_customer()
+        user = User.objects.create_user(
+            username='tester@simplebank.com',
+            email='tester@simplebank.com',
+            password='testing123',
+            first_name='qa',
+            last_name='engineer',
+        )
+        Customer.objects.create(
+            identity_number='1234',
+            address='Jauh alamat',
+            sex=Customer.MALE,
+            user=user,
+        )
 
         payload = {
             'first_name': 'another',
             'last_name': 'adit',
             'sex': Customer.MALE,
             'identity_number': '0123456789',
-            'email': 'adiyatmubarak@gmail.com',
+            'email': 'tester@simplebank.com',
             'password': 'testing123',
+            'address': 'alamat jauh sekali',
         }
 
         url = reverse('v1:customers:customer-list')
@@ -48,9 +62,3 @@ class CustomerAPITest(APITestCase):
         self.assertEqual(response.data, {
             'username': ['This username is already taken.'],
         })
-
-
-class CustomerAuthAPITest(APITestCase):
-
-    def setUp(self):
-        pass
