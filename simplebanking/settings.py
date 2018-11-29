@@ -25,12 +25,11 @@ SECRET_KEY = 'ul94!94-f*6_ky7cmx#^0z7v@@)8iav(*auza#@$v5ho$rl=-b'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
-
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -38,6 +37,17 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
+THIRD_PARTY_APPS = [
+    'rest_framework',
+    'rest_framework_swagger',
+]
+
+LOCAL_APPS = [
+    'customers',
+]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -76,9 +86,9 @@ WSGI_APPLICATION = 'simplebanking.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'banking_db',
-        'USER': 'banking',
-        'PASSWORD': 'banking',
+        'NAME': 'simplebankdb',
+        'USER': 'postgres',
+        'PASSWORD': '',
         'HOST': 'primary_db',
         'PORT': '5432',
     }
@@ -123,3 +133,12 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+
+
+# --------------------------- DRF config ---------------------------------------
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ]
+}

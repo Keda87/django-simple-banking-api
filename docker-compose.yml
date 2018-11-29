@@ -7,7 +7,6 @@ services:
     volumes:
     - ./conf:/etc/nginx/conf.d
     - ./static:/static
-    - .:/sourcecode
     links:
     - api:api
     ports:
@@ -21,15 +20,15 @@ services:
     depends_on:
       - primary_db
       - secondary_db
+      - queuing
+    volumes:
+      - .:/sourcecode
 
   primary_db:
     image: postgres
     restart: always
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_USER: "banking"
-      POSTGRES_PASSWORD: "banking"
 
   secondary_db:
     image: mongo:3.6-jessie

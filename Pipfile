@@ -9,6 +9,8 @@ djangorestframework = "==3.8.2"
 gunicorn = "==19.9.0"
 pymongo = "==3.7.2"
 "psycopg2" = "*"
+django-rest-swagger = "*"
+djangorestframework-simplejwt = "==3.3"
 
 [dev-packages]
 
