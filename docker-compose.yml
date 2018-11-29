@@ -1,0 +1,44 @@
+version: '3'
+services:
+
+  server:
+    restart: always
+    image: nginx
+    volumes:
+    - ./conf:/etc/nginx/conf.d
+    - ./static:/static
+    - .:/sourcecode
+    links:
+    - api:api
+    ports:
+    - "80:80"
+
+  api:
+    build: .
+    expose:
+    - "5000"
+    command: gunicorn simplebanking.wsgi -b 0.0.0.0:5000 --log-level=debug --log-file=-
+    depends_on:
+      - primary_db
+      - secondary_db
+
+  primary_db:
+    image: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: "banking"
+      POSTGRES_PASSWORD: "banking"
+
+  secondary_db:
+    image: mongo:3.6-jessie
+    environment:
+      - MONGODB_USERNAME=banking
+      - MONGODB_PASSWORD=banking
+      - MONGODB_DATABASE=banking_log
+
+  queuing:
+    image: rabbitmq
+    ports:
+      - 5672
