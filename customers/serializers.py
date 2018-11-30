@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.db import transaction
 from rest_framework import serializers
 
+from administrations.models import BankInformation
 from customers.models import Customer
 
 
@@ -50,6 +51,11 @@ class CustomerSerializer(CustomerSignUpSerializer,
             address=validated_data.get('address'),
             sex=validated_data.get('sex'),
             user=user,
+        )
+
+        BankInformation.objects.create(
+            account_number=BankInformation.generate_account_number(),
+            holder=customer,
         )
 
         return customer
