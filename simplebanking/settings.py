@@ -43,6 +43,7 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
+    'cores',
     'customers',
     'administrations',
 ]
