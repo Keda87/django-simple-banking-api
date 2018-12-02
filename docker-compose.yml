@@ -25,12 +25,12 @@ services:
       - .:/sourcecode
 
   primary_db:
-    image: postgres
+    image: postgres:9.6
     restart: always
     ports:
       - "5432:5432"
     volumes:
-      - ./pgdata:/var/lib/postgresql/data
+      - ./pgdata:/var/lib/postgresql/9.6
 
   secondary_db:
     image: mongo:3.6-jessie

@@ -5,7 +5,7 @@ from rest_framework.test import APITestCase, APIRequestFactory, force_authentica
 
 from administrations.models import BankInformation
 from customers.models import Customer
-from .views import BankInformationViewSet
+from .views import BankInformationViewSet, DepositViewSet
 
 
 class BankInformationAPITest(APITestCase):
@@ -46,7 +46,6 @@ class BankInformationAPITest(APITestCase):
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    # TODO: Still behave abnormal need to fix this test.
     def test_rekening_activation_another_customer(self):
         self.register_customer('tester1@gmail.com', '123456')
         customer1 = Customer.objects.get(user__username='tester1@gmail.com')
@@ -60,7 +59,7 @@ class BankInformationAPITest(APITestCase):
         force_authenticate(request, customer2.user)
         view = BankInformationViewSet.as_view({'put': 'activate'})
         response = view(request, guid=bank_customer1.guid)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_rekening_activation(self):
         self.register_customer('tester@gmail.com', '123456')
@@ -109,7 +108,34 @@ class BankInformationAPITest(APITestCase):
         self.assertTrue(bank_info.is_active)
 
     def test_deposit_rekening(self):
-        self.assertTrue(True)
+        self.register_customer('tester@gmail.com', '123456')
+        customer = Customer.objects.get(user__username='tester@gmail.com')
+        bank_info = customer.bankinformation
+        bank_info.is_active = True
+        bank_info.save()
+
+        url = reverse('v1:accounts:deposit-list')
+        data = {'amount': 20000}
+        request = self.factory.post(path=url, data=data)
+        force_authenticate(request, customer.user)
+        view = DepositViewSet.as_view({'post': 'create'})
+        response = view(request)
+        bank_info.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(bank_info.total_balance, 20000)
+
+    def test_deposit_inactive_rekening(self):
+        self.register_customer('tester@gmail.com', '123456')
+        customer = Customer.objects.get(user__username='tester@gmail.com')
+
+        url = reverse('v1:accounts:deposit-list')
+        data = {'amount': 20000}
+        request = self.factory.post(path=url, data=data)
+        force_authenticate(request, customer.user)
+        view = DepositViewSet.as_view({'post': 'create'})
+        response = view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(response.data['sender'][0]), 'Bank account is blocked or inactive.')
 
     def test_withdraw_rekening(self):
         self.assertTrue(True)

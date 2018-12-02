@@ -2,6 +2,7 @@ import random
 import uuid
 
 from django.db import models
+from django.db.models import Sum
 
 from cores.models import CommonInfo
 
@@ -12,6 +13,16 @@ class BankInformation(CommonInfo):
     holder = models.OneToOneField('customers.Customer', on_delete=models.CASCADE)
     is_active = models.BooleanField(default=False)
 
+    @property
+    def total_balance(self):
+        aggregate_result = BankStatement.objects.filter(
+            bank_info__pk=self.pk,
+            is_debit=False,
+        ).aggregate(total=Sum('amount'))
+
+        result = aggregate_result.get('total')
+        return result if result is not None else 0
+
     @classmethod
     def generate_account_number(cls):
         return ''.join(random.choice('0123456789ABCDEFGH') for _ in range(13))
@@ -21,11 +32,11 @@ class BankInformation(CommonInfo):
 
 
 class BankStatement(CommonInfo):
-    bank_info = models.ForeignKey(
+    bank_info = models.ForeignKey(  # Bank information for the receiver.
         BankInformation,
         related_name='mutations',
         on_delete=models.CASCADE,
-    ),
+    )
     sender = models.ForeignKey(
         'customers.Customer',
         related_name='sender',
