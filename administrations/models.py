@@ -15,13 +15,23 @@ class BankInformation(CommonInfo):
 
     @property
     def total_balance(self):
-        aggregate_result = BankStatement.objects.filter(
+        aggregate_credit = BankStatement.objects.filter(
             bank_info__pk=self.pk,
             is_debit=False,
         ).aggregate(total=Sum('amount'))
 
-        result = aggregate_result.get('total')
-        return result if result is not None else 0
+        aggregate_debit = BankStatement.objects.filter(
+            bank_info__pk=self.pk,
+            is_debit=True,
+        ).aggregate(total=Sum('amount'))
+
+        credit = aggregate_credit.get('total')
+        credit = credit if credit is not None else 0
+
+        debit = aggregate_debit.get('total')
+        debit = debit if debit is not None else 0
+
+        return credit - debit
 
     @classmethod
     def generate_account_number(cls):
@@ -51,6 +61,7 @@ class BankStatement(CommonInfo):
     is_debit = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.bank_info.account_number
+        return (f'Owner: {self.bank_info.holder.user.get_full_name()} '
+                f'{"Debit: " if self.is_debit else "Credit: "} {self.amount}')
 
 

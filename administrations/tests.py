@@ -3,9 +3,9 @@ from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APITestCase, APIRequestFactory, force_authenticate
 
-from administrations.models import BankInformation
 from customers.models import Customer
-from .views import BankInformationViewSet, DepositViewSet
+from .models import BankInformation, BankStatement
+from .views import BankInformationViewSet, DepositViewSet, TransferViewSet
 
 
 class BankInformationAPITest(APITestCase):
@@ -31,6 +31,16 @@ class BankInformationAPITest(APITestCase):
             account_number=BankInformation.generate_account_number(),
             holder=customer,
         )
+
+    @classmethod
+    def create_deposit(cls, bank, amount):
+        deposit = BankStatement()
+        deposit.bank_info = bank
+        deposit.sender = bank.holder
+        deposit.receiver = bank.holder
+        deposit.amount = amount
+        deposit.is_debit = False
+        deposit.save()
 
     def setUp(self):
         self.factory = APIRequestFactory()
@@ -144,13 +154,134 @@ class BankInformationAPITest(APITestCase):
         self.assertTrue(True)
 
     def test_bank_transfer(self):
-        self.assertTrue(True)
+        self.register_customer('customer1@gmail.com', '12345')
+        customer1 = Customer.objects.get(user__email='customer1@gmail.com')
+        bank_customer1 = customer1.bankinformation
+        bank_customer1.is_active = True
+        bank_customer1.save()
+        self.create_deposit(bank_customer1, 130000)
+
+        self.register_customer('customer2@gmail.com', '54321')
+        customer2 = Customer.objects.get(user__email='customer2@gmail.com')
+        bank_customer2 = customer2.bankinformation
+        bank_customer2.is_active = True
+        bank_customer2.save()
+
+        data = {
+            'destination_account_number': bank_customer2.account_number,
+            'amount': 30000
+        }
+        url = reverse('v1:administrations:transfer-list')
+        request = self.factory.post(path=url, data=data)
+        force_authenticate(request, customer1.user)
+        view = TransferViewSet.as_view({'post': 'create'})
+        response = view(request)
+        bank_customer1.refresh_from_db()
+        bank_customer2.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(bank_customer1.total_balance, 100000)
+        self.assertEqual(bank_customer2.total_balance, 30000)
 
     def test_bank_transfer_with_amount_exceeded(self):
-        self.assertTrue(True)
+        self.register_customer('customer1@gmail.com', '12345')
+        customer1 = Customer.objects.get(user__email='customer1@gmail.com')
+        bank_customer1 = customer1.bankinformation
+        bank_customer1.is_active = True
+        bank_customer1.save()
+        self.create_deposit(bank_customer1, 1000)
+
+        self.register_customer('customer2@gmail.com', '54321')
+        customer2 = Customer.objects.get(user__email='customer2@gmail.com')
+        bank_customer2 = customer2.bankinformation
+        bank_customer2.is_active = True
+        bank_customer2.save()
+
+        data = {
+            'destination_account_number': bank_customer2.account_number,
+            'amount': 5000,
+        }
+        url = reverse('v1:administrations:transfer-list')
+        request = self.factory.post(path=url, data=data)
+        force_authenticate(request, customer1.user)
+        view = TransferViewSet.as_view({'post': 'create'})
+        response = view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(response.data['amount'][0]), 'Insufficient funds.')
 
     def test_bank_transfer_using_inactive_rekening(self):
-        self.assertTrue(True)
+        self.register_customer('customer1@gmail.com', '12345')
+        customer1 = Customer.objects.get(user__email='customer1@gmail.com')
+        bank_customer1 = customer1.bankinformation
+        bank_customer1.is_active = False
+        bank_customer1.save()
+        self.create_deposit(bank_customer1, 1000)
+
+        self.register_customer('customer2@gmail.com', '54321')
+        customer2 = Customer.objects.get(user__email='customer2@gmail.com')
+        bank_customer2 = customer2.bankinformation
+        bank_customer2.is_active = True
+        bank_customer2.save()
+
+        data = {
+            'destination_account_number': bank_customer2.account_number,
+            'amount': 5000,
+        }
+        url = reverse('v1:administrations:transfer-list')
+        request = self.factory.post(path=url, data=data)
+        force_authenticate(request, customer1.user)
+        view = TransferViewSet.as_view({'post': 'create'})
+        response = view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(response.data['sender'][0]), 'Bank account is blocked or inactive.')
 
     def test_bank_transfer_to_inactive_rekening(self):
-        self.assertTrue(True)
+        self.register_customer('customer1@gmail.com', '12345')
+        customer1 = Customer.objects.get(user__email='customer1@gmail.com')
+        bank_customer1 = customer1.bankinformation
+        bank_customer1.is_active = True
+        bank_customer1.save()
+        self.create_deposit(bank_customer1, 1000)
+
+        self.register_customer('customer2@gmail.com', '54321')
+        customer2 = Customer.objects.get(user__email='customer2@gmail.com')
+        bank_customer2 = customer2.bankinformation
+        bank_customer2.is_active = False
+        bank_customer2.save()
+
+        data = {
+            'destination_account_number': bank_customer2.account_number,
+            'amount': 1000,
+        }
+        url = reverse('v1:administrations:transfer-list')
+        request = self.factory.post(path=url, data=data)
+        force_authenticate(request, customer1.user)
+        view = TransferViewSet.as_view({'post': 'create'})
+        response = view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(response.data['receiver'][0]), 'Bank account is blocked or inactive.')
+
+    def test_bank_transfer_to_invalid_rekening(self):
+        self.register_customer('customer1@gmail.com', '12345')
+        customer1 = Customer.objects.get(user__email='customer1@gmail.com')
+        bank_customer1 = customer1.bankinformation
+        bank_customer1.is_active = True
+        bank_customer1.save()
+        self.create_deposit(bank_customer1, 1000)
+
+        self.register_customer('customer2@gmail.com', '54321')
+        customer2 = Customer.objects.get(user__email='customer2@gmail.com')
+        bank_customer2 = customer2.bankinformation
+        bank_customer2.is_active = True
+        bank_customer2.save()
+
+        data = {
+            'destination_account_number': 'HIYAHIYAHIYA',
+            'amount': 1000,
+        }
+        url = reverse('v1:administrations:transfer-list')
+        request = self.factory.post(path=url, data=data)
+        force_authenticate(request, customer1.user)
+        view = TransferViewSet.as_view({'post': 'create'})
+        response = view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(response.data['destination_account_number'][0]), 'Invalid account number.')

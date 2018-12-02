@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 
 from customers.models import Customer
@@ -58,4 +59,78 @@ class DepositTransactionSerializer(serializers.Serializer):
         deposit.save()
 
         serializer = TransactionSerializer(instance=deposit)
+        return serializer.data
+
+
+class TransferTransactionSerializer(serializers.Serializer):
+    sender = serializers.PrimaryKeyRelatedField(
+        queryset=Customer.objects.filter(is_deleted=False),
+    )
+    destination_account_number = serializers.CharField()
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2)
+
+    def __init__(self, *args, **kwargs):
+        super(TransferTransactionSerializer, self).__init__(*args, **kwargs)
+        self.receiver_bank = None
+
+    @transaction.atomic
+    def validate(self, attrs):
+        try:
+            account_number = attrs.get('destination_account_number')
+            self.receiver_bank = BankInformation.objects.select_for_update().get(
+                account_number=account_number,
+            )
+        except BankInformation.DoesNotExist:
+            raise serializers.ValidationError({
+                'destination_account_number': 'Invalid account number.'
+            })
+
+        # Ensure receiver bank is active.
+        if not self.receiver_bank.is_active:
+            raise serializers.ValidationError({
+                'receiver': 'Bank account is blocked or inactive.'
+            })
+
+        # Ensure sender bank is active.
+        sender = attrs.get('sender')
+        if not sender.bankinformation.is_active:
+            raise serializers.ValidationError({
+                'sender': 'Bank account is blocked or inactive.'
+            })
+
+        # Ensure sender bank has sufficient balance.
+        sender_bank = BankInformation.objects.select_for_update().get(
+            pk=sender.bankinformation.pk,
+        )
+        if sender_bank.total_balance < attrs.get('amount'):
+            raise serializers.ValidationError({
+                'amount': 'Insufficient funds.'
+            })
+
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data):
+        sender = validated_data.get('sender')
+        amount = validated_data.get('amount')
+
+        # Bank statement for sender.
+        statement_sender = BankStatement()
+        statement_sender.bank_info = sender.bankinformation
+        statement_sender.sender = sender
+        statement_sender.receiver = self.receiver_bank.holder
+        statement_sender.amount = amount
+        statement_sender.is_debit = True
+        statement_sender.save()
+
+        # Bank statement for receiver.
+        statement_receiver = BankStatement()
+        statement_receiver.bank_info = self.receiver_bank
+        statement_receiver.sender = sender
+        statement_receiver.receiver = self.receiver_bank.holder
+        statement_receiver.amount = amount
+        statement_receiver.is_debit = False
+        statement_receiver.save()
+
+        serializer = TransactionSerializer(instance=statement_sender)
         return serializer.data
