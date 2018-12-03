@@ -34,12 +34,8 @@ services:
 
   secondary_db:
     image: mongo:3.6-jessie
-    environment:
-      - MONGODB_USERNAME=banking
-      - MONGODB_PASSWORD=banking
-      - MONGODB_DATABASE=banking_log
-    ports:
-      - "27018:27017"
+    volumes:
+      - ./data:/data
 
   queuing:
     image: rabbitmq
