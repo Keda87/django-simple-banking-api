@@ -5,7 +5,7 @@ from rest_framework.test import APITestCase, APIRequestFactory, force_authentica
 
 from customers.models import Customer
 from .models import BankInformation, BankStatement
-from .views import BankInformationViewSet, DepositViewSet, TransferViewSet
+from .views import BankInformationViewSet, DepositViewSet, TransferViewSet, WithdrawViewSet
 
 
 class BankInformationAPITest(APITestCase):
@@ -40,6 +40,7 @@ class BankInformationAPITest(APITestCase):
         deposit.receiver = bank.holder
         deposit.amount = amount
         deposit.is_debit = False
+        deposit.description = 'Amount deposit'
         deposit.save()
 
     def setUp(self):
@@ -133,6 +134,8 @@ class BankInformationAPITest(APITestCase):
         bank_info.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(bank_info.total_balance, 20000)
+        mutation = bank_info.mutations.first()
+        self.assertEqual(mutation.description, 'Amount deposit')
 
     def test_deposit_inactive_rekening(self):
         self.register_customer('tester@gmail.com', '123456')
@@ -148,10 +151,68 @@ class BankInformationAPITest(APITestCase):
         self.assertEqual(str(response.data['sender'][0]), 'Bank account is blocked or inactive.')
 
     def test_withdraw_rekening(self):
-        self.assertTrue(True)
+        self.register_customer('customer1@gmail.com', '12345')
+        customer = Customer.objects.get(user__email='customer1@gmail.com')
+        bank_info = customer.bankinformation
+        bank_info.is_active = True
+        bank_info.save()
+        self.create_deposit(bank_info, 100)
+
+        data = {
+            'sender': customer.pk,
+            'amount': 10,
+        }
+        url = reverse('v1:administrations:withdraw-list')
+        request = self.factory.post(path=url, data=data)
+        force_authenticate(request, customer.user)
+        view = WithdrawViewSet.as_view({'post': 'create'})
+        response = view(request)
+        bank_info.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(bank_info.total_balance, 90)
+        mutation = bank_info.mutations.latest('pk')
+        self.assertEqual(mutation.description, 'Amount withdrawn')
+
+    def test_withdraw_from_inactive_rekening(self):
+        self.register_customer('customer1@gmail.com', '12345')
+        customer = Customer.objects.get(user__email='customer1@gmail.com')
+        bank_info = customer.bankinformation
+        bank_info.is_active = False
+        bank_info.save()
+        self.create_deposit(bank_info, 100)
+
+        data = {
+            'sender': customer.pk,
+            'amount': 10,
+        }
+        url = reverse('v1:administrations:withdraw-list')
+        request = self.factory.post(path=url, data=data)
+        force_authenticate(request, customer.user)
+        view = WithdrawViewSet.as_view({'post': 'create'})
+        response = view(request)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(response.data['sender'][0]), 'Bank account is blocked or inactive.')
 
     def test_withdraw_rekening_with_amount_exceeded(self):
-        self.assertTrue(True)
+        self.register_customer('customer1@gmail.com', '12345')
+        customer = Customer.objects.get(user__email='customer1@gmail.com')
+        bank_info = customer.bankinformation
+        bank_info.is_active = True
+        bank_info.save()
+        self.create_deposit(bank_info, 100)
+
+        data = {
+            'sender': customer.pk,
+            'amount': 500,
+        }
+        url = reverse('v1:administrations:withdraw-list')
+        request = self.factory.post(path=url, data=data)
+        force_authenticate(request, customer.user)
+        view = WithdrawViewSet.as_view({'post': 'create'})
+        response = view(request)
+        bank_info.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(str(response.data['amount'][0]), 'Insufficient funds.')
 
     def test_bank_transfer(self):
         self.register_customer('customer1@gmail.com', '12345')
@@ -178,9 +239,13 @@ class BankInformationAPITest(APITestCase):
         response = view(request)
         bank_customer1.refresh_from_db()
         bank_customer2.refresh_from_db()
+        mutation_customer1 = bank_customer1.mutations.latest('pk')
+        mutation_customer2 = bank_customer2.mutations.latest('pk')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(bank_customer1.total_balance, 100000)
         self.assertEqual(bank_customer2.total_balance, 30000)
+        self.assertEqual(mutation_customer1.description, 'Amount transferred')
+        self.assertEqual(mutation_customer2.description, 'Amount received')
 
     def test_bank_transfer_with_amount_exceeded(self):
         self.register_customer('customer1@gmail.com', '12345')

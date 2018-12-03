@@ -59,6 +59,7 @@ class BankStatement(CommonInfo):
     )
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     is_debit = models.BooleanField(default=False)
+    description = models.TextField()
 
     def __str__(self):
         return (f'Owner: {self.bank_info.holder.user.get_full_name()} '

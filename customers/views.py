@@ -8,7 +8,6 @@ from .serializers import CustomerSerializer
 
 
 class CustomerViewSet(mixins.CreateModelMixin,
-                      mixins.RetrieveModelMixin,
                       mixins.ListModelMixin,
                       viewsets.GenericViewSet):
     queryset = Customer.objects.filter(is_deleted=False).order_by('-created')

@@ -4,7 +4,8 @@ from rest_framework.response import Response
 
 from cores.permissions import IsBankOwner, IsCustomer
 from .models import BankInformation, BankStatement
-from .serializers import AccountSerializer, DepositTransactionSerializer, TransferTransactionSerializer
+from .serializers import (AccountSerializer, DepositTransactionSerializer,
+                          TransferTransactionSerializer, WithdrawSerializer)
 
 
 class BankInformationViewSet(mixins.ListModelMixin,
@@ -70,3 +71,18 @@ class TransferViewSet(mixins.CreateModelMixin,
             return Response(response, status.HTTP_201_CREATED)
         return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)
 
+
+class WithdrawViewSet(mixins.CreateModelMixin,
+                      viewsets.GenericViewSet):
+    serializer_class = WithdrawSerializer
+    permission_classes = [IsCustomer]
+    queryset = BankStatement.objects.filter(is_deleted=False)
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy()
+        data['sender'] = request.user.customer.pk
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            response = serializer.save()
+            return Response(response, status.HTTP_201_CREATED)
+        return Response(serializer.errors, status.HTTP_400_BAD_REQUEST)

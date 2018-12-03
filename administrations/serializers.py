@@ -56,6 +56,42 @@ class DepositTransactionSerializer(serializers.Serializer):
         deposit.receiver = sender
         deposit.amount = deposit_amount
         deposit.is_debit = False
+        deposit.description = 'Amount deposit'
+        deposit.save()
+
+        serializer = TransactionSerializer(instance=deposit)
+        return serializer.data
+
+
+class WithdrawSerializer(DepositTransactionSerializer):
+
+    @transaction.atomic
+    def validate(self, attrs):
+        sender = attrs.get('sender')
+        amount = attrs.get('amount')
+
+        sender_bank = BankInformation.objects.select_for_update().get(
+            pk=sender.bankinformation.pk,
+        )
+
+        if sender_bank.total_balance < amount:
+            raise serializers.ValidationError({
+                'amount': 'Insufficient funds.'
+            })
+
+        return super(WithdrawSerializer, self).validate(attrs)
+
+    def create(self, validated_data):
+        sender = validated_data.get('sender')
+        deposit_amount = validated_data.get('amount')
+
+        deposit = BankStatement()
+        deposit.bank_info = sender.bankinformation
+        deposit.sender = sender
+        deposit.receiver = sender
+        deposit.amount = deposit_amount
+        deposit.is_debit = True
+        deposit.description = 'Amount withdrawn'
         deposit.save()
 
         serializer = TransactionSerializer(instance=deposit)
@@ -121,6 +157,7 @@ class TransferTransactionSerializer(serializers.Serializer):
         statement_sender.receiver = self.receiver_bank.holder
         statement_sender.amount = amount
         statement_sender.is_debit = True
+        statement_sender.description = 'Amount transferred'
         statement_sender.save()
 
         # Bank statement for receiver.
@@ -130,6 +167,7 @@ class TransferTransactionSerializer(serializers.Serializer):
         statement_receiver.receiver = self.receiver_bank.holder
         statement_receiver.amount = amount
         statement_receiver.is_debit = False
+        statement_receiver.description = 'Amount received'
         statement_receiver.save()
 
         serializer = TransactionSerializer(instance=statement_sender)
