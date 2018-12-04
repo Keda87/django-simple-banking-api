@@ -5,7 +5,8 @@ from rest_framework.response import Response
 from cores.permissions import IsBankOwner, IsCustomer
 from .models import BankInformation, BankStatement
 from .serializers import (AccountSerializer, DepositTransactionSerializer,
-                          TransferTransactionSerializer, WithdrawSerializer)
+                          TransferTransactionSerializer, WithdrawSerializer,
+                          MutationSerializer)
 
 
 class BankInformationViewSet(mixins.ListModelMixin,
@@ -14,6 +15,11 @@ class BankInformationViewSet(mixins.ListModelMixin,
     permission_classes = [IsCustomer]
     queryset = BankInformation.objects.filter(is_deleted=False)
     lookup_field = 'guid'
+
+    def get_serializer_class(self):
+        if self.action == 'mutations':
+            return MutationSerializer
+        return super(BankInformationViewSet, self).get_serializer_class()
 
     def get_queryset(self):
         queryet = super(BankInformationViewSet, self).get_queryset()
@@ -39,6 +45,13 @@ class BankInformationViewSet(mixins.ListModelMixin,
         bank_info.save()
         return Response(status=status.HTTP_200_OK)
 
+    @action(methods=['get'], detail=True, permission_classes=[IsBankOwner])
+    def mutations(self, request, **kwargs):
+        bank_info = self.get_object()
+        mutations = bank_info.mutations.filter(is_deleted=False).order_by('-created')
+        mutations = self.paginate_queryset(mutations)
+        serializer = self.get_serializer(instance=mutations, many=True)
+        return self.get_paginated_response(serializer.data)
 
 class DepositViewSet(mixins.CreateModelMixin,
                      viewsets.GenericViewSet):

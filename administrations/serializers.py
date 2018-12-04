@@ -172,3 +172,17 @@ class TransferTransactionSerializer(serializers.Serializer):
 
         serializer = TransactionSerializer(instance=statement_sender)
         return serializer.data
+
+
+class MutationSerializer(serializers.ModelSerializer):
+    sender = serializers.CharField(source='bank_info.account_number')
+    status = serializers.SerializerMethodField()
+
+    def get_status(self, obj):
+        return 'Debit' if obj.is_debit else 'Credit'
+
+    class Meta:
+        model = BankStatement
+        fields = [
+            'id', 'created', 'amount', 'status', 'sender', 'description'
+        ]

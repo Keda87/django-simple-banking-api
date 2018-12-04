@@ -350,3 +350,45 @@ class BankInformationAPITest(APITestCase):
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(str(response.data['destination_account_number'][0]), 'Invalid account number.')
+
+    def test_retrieve_rekening_mutations(self):
+        self.register_customer('customer1@gmail.com', '12345')
+        customer = Customer.objects.get(user__email='customer1@gmail.com')
+        bank_info = customer.bankinformation
+        bank_info.is_active = True
+        bank_info.save()
+        self.create_deposit(bank_info, 1000)
+
+        url = reverse(
+            'v1:administrations:bankinformation-mutations',
+            args=[bank_info.guid.hex],
+        )
+        request = self.factory.get(path=url)
+        force_authenticate(request, customer.user)
+        view = BankInformationViewSet.as_view({'get': 'mutations'})
+        response = view(request, guid=bank_info.guid)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_retrieve_rekening_mutations_from_another_customer_account(self):
+        self.register_customer('customer1@gmail.com', '12345')
+        customer1 = Customer.objects.get(user__email='customer1@gmail.com')
+        bank_customer1 = customer1.bankinformation
+        bank_customer1.is_active = True
+        bank_customer1.save()
+        self.create_deposit(bank_customer1, 1000)
+
+        self.register_customer('customer2@gmail.com', '54321')
+        customer2 = Customer.objects.get(user__email='customer2@gmail.com')
+        bank_customer2 = customer2.bankinformation
+        bank_customer2.is_active = True
+        bank_customer2.save()
+
+        url = reverse(
+            'v1:administrations:bankinformation-mutations',
+            args=[bank_customer1.guid.hex],
+        )
+        request = self.factory.get(path=url)
+        force_authenticate(request, customer2.user)
+        view = BankInformationViewSet.as_view({'get': 'mutations'})
+        response = view(request, guid=bank_customer1.guid)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
