@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
+from cores.tasks import task_event_logging
 from customers.models import Customer
 from .models import BankInformation, BankStatement
 
@@ -41,6 +42,10 @@ class DepositTransactionSerializer(serializers.Serializer):
     def validate(self, attrs):
         sender = attrs.get('sender')
         if not sender.bankinformation.is_active:
+            meta = dict(self.context.get('request').data)
+            msg = 'Failed to deposit funds.'
+            task_event_logging.delay(sender.user.email, msg, meta)
+
             raise serializers.ValidationError({
                 'sender': 'Bank account is blocked or inactive.'
             })
@@ -59,6 +64,10 @@ class DepositTransactionSerializer(serializers.Serializer):
         deposit.description = 'Amount deposit'
         deposit.save()
 
+        msg = 'Succeed to deposit funds.'
+        attrs = dict(self.context.get('request').data)
+        task_event_logging.delay(sender.user.email, msg, attrs)
+
         serializer = TransactionSerializer(instance=deposit)
         return serializer.data
 
@@ -75,6 +84,10 @@ class WithdrawSerializer(DepositTransactionSerializer):
         )
 
         if sender_bank.total_balance < amount:
+            meta = dict(self.context.get('request').data)
+            msg = 'Amount to transfer is exceeded to be withdraw.'
+            task_event_logging.delay(sender.user.email, msg, meta)
+
             raise serializers.ValidationError({
                 'amount': 'Insufficient funds.'
             })
@@ -94,6 +107,10 @@ class WithdrawSerializer(DepositTransactionSerializer):
         deposit.description = 'Amount withdrawn'
         deposit.save()
 
+        msg = 'Succeed to withdraw funds.'
+        attrs = dict(self.context.get('request').data)
+        task_event_logging.delay(sender.user.email, msg, attrs)
+
         serializer = TransactionSerializer(instance=deposit)
         return serializer.data
 
@@ -111,25 +128,38 @@ class TransferTransactionSerializer(serializers.Serializer):
 
     @transaction.atomic
     def validate(self, attrs):
+        sender = attrs.get('sender')
+
         try:
             account_number = attrs.get('destination_account_number')
             self.receiver_bank = BankInformation.objects.select_for_update().get(
                 account_number=account_number,
             )
         except BankInformation.DoesNotExist:
+            meta = dict(self.context.get('request').data)
+            msg = 'Failed to transfer, invalid destination account number.'
+            task_event_logging.delay(sender.user.email, msg, meta)
+
             raise serializers.ValidationError({
                 'destination_account_number': 'Invalid account number.'
             })
 
         # Ensure receiver bank is active.
         if not self.receiver_bank.is_active:
+            meta = dict(self.context.get('request').data)
+            msg = 'Failed to transfer, receiver bank is inactive.'
+            task_event_logging.delay(sender.user.email, msg, meta)
+
             raise serializers.ValidationError({
                 'receiver': 'Bank account is blocked or inactive.'
             })
 
         # Ensure sender bank is active.
-        sender = attrs.get('sender')
         if not sender.bankinformation.is_active:
+            meta = dict(self.context.get('request').data)
+            msg = 'Failed to transfer, sender bank is inactive.'
+            task_event_logging.delay(sender.user.email, msg, meta)
+
             raise serializers.ValidationError({
                 'sender': 'Bank account is blocked or inactive.'
             })
@@ -139,6 +169,10 @@ class TransferTransactionSerializer(serializers.Serializer):
             pk=sender.bankinformation.pk,
         )
         if sender_bank.total_balance < attrs.get('amount'):
+            meta = dict(self.context.get('request').data)
+            msg = 'Failed to transfer, amount to be transfer is exceeded.'
+            task_event_logging.delay(sender.user.email, msg, meta)
+
             raise serializers.ValidationError({
                 'amount': 'Insufficient funds.'
             })
@@ -169,6 +203,10 @@ class TransferTransactionSerializer(serializers.Serializer):
         statement_receiver.is_debit = False
         statement_receiver.description = 'Amount received'
         statement_receiver.save()
+
+        msg = 'Transfer succeed.'
+        attrs = dict(self.context.get('request').data)
+        task_event_logging.delay(sender.user.email, msg, attrs)
 
         serializer = TransactionSerializer(instance=statement_sender)
         return serializer.data
