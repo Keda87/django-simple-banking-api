@@ -1,0 +1,362 @@
+{
+	"info": {
+		"_postman_id": "3ef1be49-abfc-42aa-a2a2-c52ad4fedf95",
+		"name": "Simple BANK",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "customer",
+			"item": [
+				{
+					"name": "Register Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"address\": \"Jakarta timur jauh\",\n    \"sex\": \"male\",\n    \"identity_number\": \"123456789\",\n    \"first_name\": \"adiyat\",\n    \"last_name\": \"mubarak\",\n    \"email\": \"adiyatmubarak@gmail.com\",\n    \"password\": \"testing\"\n}"
+						},
+						"url": {
+							"raw": "127.0.0.1/api/v1/customers/",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customers",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer Information",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQzNjg5OTIzLCJqdGkiOiIyNzc1NjRjZTkwYjY0YTZlOWE2ZTRhZGI0YzA1MTU5ZSIsInVzZXJfaWQiOjJ9.pIHqT4K9WzlcW55MNM1tSm0AiyZeeCAq5Yw2Rhc4HDs",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "127.0.0.1/api/v1/customers/",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customers",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "authorization",
+			"item": [
+				{
+					"name": "Obtain JWT Token",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "username",
+									"value": "adiyatmubarak@gmail.com",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "testing",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://127.0.0.1/token/",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"path": [
+								"token",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "accounts",
+			"item": [
+				{
+					"name": "Retrieve Bank Account",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQzNjg5OTIzLCJqdGkiOiIyNzc1NjRjZTkwYjY0YTZlOWE2ZTRhZGI0YzA1MTU5ZSIsInVzZXJfaWQiOjJ9.pIHqT4K9WzlcW55MNM1tSm0AiyZeeCAq5Yw2Rhc4HDs",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost/api/v1/accounts/",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"v1",
+								"accounts",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bank Account Activation",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQzNjg5OTIzLCJqdGkiOiIyNzc1NjRjZTkwYjY0YTZlOWE2ZTRhZGI0YzA1MTU5ZSIsInVzZXJfaWQiOjJ9.pIHqT4K9WzlcW55MNM1tSm0AiyZeeCAq5Yw2Rhc4HDs",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost/api/v1/accounts/4401fb05-3ffa-4530-b5c8-07f06b191254/activate/",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"v1",
+								"accounts",
+								"4401fb05-3ffa-4530-b5c8-07f06b191254",
+								"activate",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bank deposit",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQzNzI1NTM2LCJqdGkiOiJmY2EwODZjNzhiMjY0MDFkODkzYjA1ZjQ2YTZhZTc2NSIsInVzZXJfaWQiOjJ9.KXvRTY0dEj_5sN8oHfrjDK53WqqoF0wmMMo5jfYMPd0",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"amount\": 145000\n}"
+						},
+						"url": {
+							"raw": "localhost/api/v1/accounts/deposit/",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"v1",
+								"accounts",
+								"deposit",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bank Transfer",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQzNzcyMzAwLCJqdGkiOiJmZGVhNGUwZDRhNmU0N2QwOWNiNzgxNTBmZjUwZmMzYiIsInVzZXJfaWQiOjN9.IZIAocWY9FX0rSGV_zi_9ZCjERQHYl5CQX8yLF8smfE",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"destination_account_number\": \"5F57CECF92C61\",\n\t\"amount\": 100000\n}"
+						},
+						"url": {
+							"raw": "localhost/api/v1/accounts/transfer/",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"v1",
+								"accounts",
+								"transfer",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bank Mutations",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQzODgyMTgzLCJqdGkiOiI4NGRmODk2OTQxNWI0MWRkYWUxOWMzOTZlYTkwMjUyNSIsInVzZXJfaWQiOjN9.wbOyHtjD4eJ616X8rjO831TSF6U2ohDLZtB1J-fsq58",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "localhost/api/v1/accounts/ab619068-0ac8-4e0e-933e-01209694d7c9/mutations/",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"v1",
+								"accounts",
+								"ab619068-0ac8-4e0e-933e-01209694d7c9",
+								"mutations",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Bank Withdraw",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNTQzODgyNTgyLCJqdGkiOiI3YzRmMTViYTU1MDY0NTAzYjBjZjBmYWViZDVhYmY2OSIsInVzZXJfaWQiOjN9.7d2Eifhir6q-4PvfBvVTkrroLLk6u1xqCYI20yBnVXo",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"amount\": 20000\n}"
+						},
+						"url": {
+							"raw": "localhost/api/v1/accounts/withdraw/",
+							"host": [
+								"localhost"
+							],
+							"path": [
+								"api",
+								"v1",
+								"accounts",
+								"withdraw",
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
