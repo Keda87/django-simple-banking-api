@@ -32,6 +32,7 @@ Pre-requisite:
 - Python 3.6
 - RabbitMQ
 - PostgreSQL
+- MongoDB
 - Pipenv (Optional)
 
 You can go through following below to start the project.
@@ -43,7 +44,7 @@ $ ./manage.py migrate
 $ ./manage.py runserver
 ```
 
-And you can runt the project test using following command.
+And you can run the project test using following command.
 
 ```
 $ ./manage.py test --keepdb
@@ -53,5 +54,12 @@ $ ./manage.py test --keepdb
 
 Endpoints for this project are documented in `<hostname>/docs/`
 
-But you can also import postman collections within this project for more convenience.
+But you can also import [postman collections](Simple BANK.postman_collection.json) within this project for more convenience.
+
+In case you need to access all transaction logs, you can access raw mongodb result using following command.
+
+```
+$ docker-compose exec api python manage.py event_logs (if you are using Docker)
+$ ./manage.py event_logs
+```
 
