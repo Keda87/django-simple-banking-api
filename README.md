@@ -18,6 +18,7 @@ Then create the database and do a migrations.
 ```
 $ docker-compose exec primary_db createdb --username=postgres simplebankdb
 $ docker-compose exec api python manage.py migrate
+$ docker-compose exec api python manage.py collectstatic
 ```
 
 If you want to run test for this project, you can execute following command.
