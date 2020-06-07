@@ -24,7 +24,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 def home(request: HttpRequest) -> JsonResponse:
     return JsonResponse({
-        'host': request.get_raw_uri(),
+        'host': request.get_host(),
         'status': 'ok',
         'dateTime': datetime.utcnow(),
     })
