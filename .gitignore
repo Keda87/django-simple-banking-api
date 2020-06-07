@@ -2,6 +2,6 @@
 .idea/*
 .vscode/*
 venv/*
-static/*
+src/static/*
 media/*
 pgdata/*

@@ -3,7 +3,6 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from cores.permissions import IsBankOwner, IsCustomer
-from cores.tasks import task_event_logging
 from .models import BankInformation, BankStatement
 from .serializers import (AccountSerializer, DepositTransactionSerializer,
                           TransferTransactionSerializer, WithdrawSerializer,
@@ -31,8 +30,6 @@ class BankInformationViewSet(mixins.ListModelMixin,
         bank_info = customer.bankinformation
         data = self.get_serializer(instance=bank_info).data
 
-        msg = 'Retrieving bank information.'
-        task_event_logging.delay(customer.user.email, msg, {})
         return Response(data)
 
     @action(methods=['put'], detail=True, permission_classes=[IsBankOwner])
@@ -41,8 +38,6 @@ class BankInformationViewSet(mixins.ListModelMixin,
         bank_info.is_active = True
         bank_info.save()
 
-        msg = 'Activation bank account.'
-        task_event_logging.delay(bank_info.holder.user.email, msg, {})
         return Response(status=status.HTTP_200_OK)
 
     @action(methods=['put'], detail=True, permission_classes=[IsBankOwner])
@@ -51,8 +46,6 @@ class BankInformationViewSet(mixins.ListModelMixin,
         bank_info.is_active = False
         bank_info.save()
 
-        msg = 'Deactivation bank account.'
-        task_event_logging.delay(bank_info.holder.user.email, msg, {})
         return Response(status=status.HTTP_200_OK)
 
     @action(methods=['get'], detail=True, permission_classes=[IsBankOwner])
@@ -62,9 +55,8 @@ class BankInformationViewSet(mixins.ListModelMixin,
         mutations = self.paginate_queryset(mutations)
         serializer = self.get_serializer(instance=mutations, many=True)
 
-        msg = 'See transaction history.'
-        task_event_logging.delay(bank_info.holder.user.email, msg, {})
         return self.get_paginated_response(serializer.data)
+
 
 class DepositViewSet(mixins.CreateModelMixin,
                      viewsets.GenericViewSet):

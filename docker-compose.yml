@@ -1,9 +1,9 @@
 version: '3'
 services:
 
-  server:
+  reverse-proxy:
     restart: always
-    image: nginx
+    image: nginx:1.19.0-alpine
     volumes:
     - ./conf:/etc/nginx/conf.d
     - ./static:/static
@@ -12,14 +12,13 @@ services:
     ports:
     - "80:80"
 
-  api:
+  bank-api:
     build: .
     expose:
     - "5000"
     command: gunicorn simplebanking.wsgi -b 0.0.0.0:5000 --log-level=debug --log-file=-
     depends_on:
       - primary_db
-      - secondary_db
     volumes:
       - .:/sourcecode
 
@@ -31,29 +30,7 @@ services:
     volumes:
       - ./pgdata:/var/lib/postgresql/9.6
 
-  secondary_db:
-    image: mongo:3.6-jessie
-    volumes:
-      - ./data:/data
-
-  queuing:
-    image: rabbitmq
-    ports:
-      - 5672
-    environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=admin
-
-  worker:
-    build: .
-    command: celery -A simplebanking worker -l info -E
-    volumes:
-      - .:/sourcecode
-    depends_on:
-      - queuing
-
 volumes:
   pgdata:
-  data:
   conf:
   static:

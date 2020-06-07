@@ -3,7 +3,6 @@ from django.db import transaction
 from rest_framework import serializers
 
 from administrations.models import BankInformation
-from cores.tasks import task_event_logging
 from customers.models import Customer
 
 
@@ -25,9 +24,6 @@ class CustomerSignUpSerializer(serializers.Serializer):
     def validate(self, attrs):
         email = attrs.get('email')
         if User.objects.filter(username=email).exists():
-            msg = 'Failed to register customer'
-            task_event_logging.delay(email, msg, attrs)
-
             raise serializers.ValidationError({
                 'username': 'This username is already taken.'
             })
@@ -62,9 +58,6 @@ class CustomerSerializer(CustomerSignUpSerializer,
             holder=customer,
         )
 
-        msg = 'Success to register customer'
-        attrs = dict(self.context.get('request').data)
-        task_event_logging.delay(email, msg, attrs)
         return customer
 
     class Meta:

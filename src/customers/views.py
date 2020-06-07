@@ -3,7 +3,6 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from cores.permissions import IsCustomer
-from cores.tasks import task_event_logging
 from .models import Customer
 from .serializers import CustomerSerializer
 
@@ -24,6 +23,4 @@ class CustomerViewSet(mixins.CreateModelMixin,
         customer = request.user.customer
         serializer = self.get_serializer(instance=customer)
 
-        msg = 'Retrieve account information.'
-        task_event_logging.delay(customer.user.email, msg, {})
         return Response(serializer.data)

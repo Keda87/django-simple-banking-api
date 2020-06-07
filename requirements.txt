@@ -4,8 +4,6 @@ Django==2.1.7
 djangorestframework==3.8.2
 djangorestframework-simplejwt==3.3
 gunicorn==19.9.0
-psycopg2-binary==2.7.6.1
+psycopg2-binary==2.8.5
 PyJWT==1.6.4
-pymongo==3.7.2
-celery==4.2.1
 ipdb==0.11
