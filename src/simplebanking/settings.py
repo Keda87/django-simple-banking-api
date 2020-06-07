@@ -87,10 +87,10 @@ WSGI_APPLICATION = 'simplebanking.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'simplebankdb',
+        'NAME': 'db_banking',
         'USER': 'postgres',
-        'PASSWORD': '',
-        'HOST': 'primary_db',
+        'PASSWORD': 'testing',
+        'HOST': 'bank_db',
         'PORT': '5432',
     }
 }

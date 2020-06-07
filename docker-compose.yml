@@ -1,36 +1,43 @@
 version: '3'
 services:
 
-  reverse-proxy:
+  reverse_proxy:
     restart: always
     image: nginx:1.19.0-alpine
     volumes:
-    - ./conf:/etc/nginx/conf.d
-    - ./static:/static
-    links:
-    - api:api
+      - ./conf:/etc/nginx/conf.d
+      - ./src/static:/static
     ports:
     - "80:80"
+    networks:
+      - front-net
 
-  bank-api:
+  bank_api:
     build: .
     expose:
     - "5000"
-    command: gunicorn simplebanking.wsgi -b 0.0.0.0:5000 --log-level=debug --log-file=-
     depends_on:
-      - primary_db
+      - bank_db
     volumes:
-      - .:/sourcecode
+      - ./src:/sourcecode
+    networks:
+      - back-net
+      - front-net
 
-  primary_db:
-    image: postgres:9.6
+  bank_db:
+    image: postgres:9.6-alpine
     restart: always
     ports:
       - "5432:5432"
-    volumes:
-      - ./pgdata:/var/lib/postgresql/9.6
+    networks:
+      - back-net
+    environment:
+      - POSTGRES_PASSWORD=testing
+
+networks:
+  back-net:
+  front-net:
 
 volumes:
-  pgdata:
   conf:
   static:

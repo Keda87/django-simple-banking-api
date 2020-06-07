@@ -1,7 +1,7 @@
 # Simple banking API Demo
 
 Demo of simple banking system API.
-Built on top of python stack using Django, Gunicorn, Nginx, RabbitMQ and MongoDB.
+Built on top of python stack using Django, Gunicorn, PostgreSQL and Nginx
 
     
 ### Setup and installation (Docker):
@@ -16,7 +16,7 @@ $ docker-compose up -d
 Then create the database and do a migrations.
     
 ```
-$ docker-compose exec primary_db createdb --username=postgres simplebankdb
+$ docker-compose exec primary_db createdb --username=postgres db_banking
 $ docker-compose exec api python manage.py migrate
 $ docker-compose exec api python manage.py collectstatic
 ```
@@ -34,13 +34,12 @@ Pre-requisite:
 - RabbitMQ
 - PostgreSQL
 - MongoDB
-- Pipenv (Optional)
 
 You can go through following below to start the project.
 
 ```
 $ createdb --username=postgres simplebankdb
-$ pip install -r requirements.txt or pipenv install
+$ pip install -r requirements.txt
 $ ./manage.py migrate
 $ ./manage.py runserver
 ```
@@ -57,10 +56,4 @@ Endpoints for this project are documented in `<hostname>/docs/`
 
 But you can also import [postman collections](Simple BANK.postman_collection.json) within this project for more convenience.
 
-In case you need to access all transaction logs, you can access raw mongodb result using following command.
-
-```
-$ docker-compose exec api python manage.py event_logs (if you are using Docker)
-$ ./manage.py event_logs
-```
 

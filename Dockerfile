@@ -3,10 +3,18 @@ ENV PYTHONUNBUFFERED 1
 
 RUN mkdir /sourcecode
 WORKDIR /sourcecode
-COPY . /sourcecode/
+COPY src /sourcecode/
+COPY requirements.txt /sourcecode/
 
-RUN apk add postgresql-dev \
-    && apk add vim \
-    && apk add build-base gcc abuild binutils binutils-doc gcc-doc \
+RUN apk add\
+    abuild\
+    binutils\
+    binutils-doc\
+    build-base\
+    gcc\
+    gcc-doc\
+    postgresql-dev\
     && rm -rf /var/cache/apk/*
-RUN pip install -U pip && pip install -r requirements.txt
+RUN pip install -U pip && pip install --no-cache-dir -r requirements.txt
+
+CMD gunicorn simplebanking.wsgi -b 0.0.0.0:5000 --log-level=debug --log-file=-
