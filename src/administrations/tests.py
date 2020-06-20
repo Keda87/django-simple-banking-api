@@ -212,7 +212,7 @@ class BankInformationAPITest(APITestCase):
         response = view(request)
         bank_info.refresh_from_db()
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(str(response.data['amount'][0]), 'Insufficient funds.')
+        self.assertEqual(str(response.data['amount']), 'Insufficient funds.')
 
     def test_bank_transfer(self):
         self.register_customer('customer1@gmail.com', '12345')
@@ -271,7 +271,7 @@ class BankInformationAPITest(APITestCase):
         view = TransferViewSet.as_view({'post': 'create'})
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(str(response.data['amount'][0]), 'Insufficient funds.')
+        self.assertEqual(str(response.data['amount']), 'Insufficient funds.')
 
     def test_bank_transfer_using_inactive_rekening(self):
         self.register_customer('customer1@gmail.com', '12345')
@@ -297,7 +297,7 @@ class BankInformationAPITest(APITestCase):
         view = TransferViewSet.as_view({'post': 'create'})
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(str(response.data['sender'][0]), 'Bank account is blocked or inactive.')
+        self.assertEqual(str(response.data['sender']), 'Bank account is blocked or inactive.')
 
     def test_bank_transfer_to_inactive_rekening(self):
         self.register_customer('customer1@gmail.com', '12345')
@@ -323,7 +323,7 @@ class BankInformationAPITest(APITestCase):
         view = TransferViewSet.as_view({'post': 'create'})
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(str(response.data['receiver'][0]), 'Bank account is blocked or inactive.')
+        self.assertEqual(str(response.data['receiver']), 'Bank account is blocked or inactive.')
 
     def test_bank_transfer_to_invalid_rekening(self):
         self.register_customer('customer1@gmail.com', '12345')
@@ -349,7 +349,7 @@ class BankInformationAPITest(APITestCase):
         view = TransferViewSet.as_view({'post': 'create'})
         response = view(request)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(str(response.data['destination_account_number'][0]), 'Invalid account number.')
+        self.assertEqual(str(response.data['destination_account_number']), 'Invalid account number.')
 
     def test_retrieve_rekening_mutations(self):
         self.register_customer('customer1@gmail.com', '12345')

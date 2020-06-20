@@ -128,7 +128,7 @@ class TransferTransactionSerializer(serializers.Serializer):
         sender_bank = BankInformation.objects.select_for_update().get(
             pk=sender.bankinformation.pk,
         )
-        if sender_bank.total_balance < amount.get('amount'):
+        if sender_bank.total_balance < amount:
             raise serializers.ValidationError({
                 'amount': 'Insufficient funds.'
             })
