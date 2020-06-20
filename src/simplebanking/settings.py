@@ -92,6 +92,7 @@ DATABASES = {
         'PASSWORD': 'testing',
         'HOST': 'bank_db',
         'PORT': '5432',
+        'CONN_MAX_AGE ': 60
     }
 }
 
@@ -143,6 +144,7 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'PAGE_SIZE': 100
 }
 # ------------------------------------------------------------------------------

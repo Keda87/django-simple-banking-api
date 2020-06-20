@@ -27,6 +27,8 @@ services:
   bank_db:
     image: postgres:9.6-alpine
     restart: always
+    volumes:
+      - postgres:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
@@ -41,3 +43,4 @@ networks:
 volumes:
   conf:
   static:
+  postgres:

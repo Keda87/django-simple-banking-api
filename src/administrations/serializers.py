@@ -66,24 +66,18 @@ class DepositTransactionSerializer(serializers.Serializer):
 class WithdrawSerializer(DepositTransactionSerializer):
 
     @transaction.atomic
-    def validate(self, attrs):
-        sender = attrs.get('sender')
-        amount = attrs.get('amount')
+    def create(self, validated_data):
+        sender = validated_data.get('sender')
+        deposit_amount = validated_data.get('amount')
 
         sender_bank = BankInformation.objects.select_for_update().get(
             pk=sender.bankinformation.pk,
         )
 
-        if sender_bank.total_balance < amount:
+        if sender_bank.total_balance < deposit_amount:
             raise serializers.ValidationError({
                 'amount': 'Insufficient funds.'
             })
-
-        return super(WithdrawSerializer, self).validate(attrs)
-
-    def create(self, validated_data):
-        sender = validated_data.get('sender')
-        deposit_amount = validated_data.get('amount')
 
         deposit = BankStatement()
         deposit.bank_info = sender.bankinformation
@@ -105,17 +99,14 @@ class TransferTransactionSerializer(serializers.Serializer):
     destination_account_number = serializers.CharField()
     amount = serializers.DecimalField(max_digits=12, decimal_places=2)
 
-    def __init__(self, *args, **kwargs):
-        super(TransferTransactionSerializer, self).__init__(*args, **kwargs)
-        self.receiver_bank = None
-
     @transaction.atomic
-    def validate(self, attrs):
-        sender = attrs.get('sender')
+    def create(self, validated_data):
+        sender = validated_data.get('sender')
+        amount = validated_data.get('amount')
+        account_number = validated_data.get('destination_account_number')
 
         try:
-            account_number = attrs.get('destination_account_number')
-            self.receiver_bank = BankInformation.objects.select_for_update().get(
+            receiver_bank = BankInformation.objects.select_for_update().get(
                 account_number=account_number,
             )
         except BankInformation.DoesNotExist:
@@ -123,7 +114,7 @@ class TransferTransactionSerializer(serializers.Serializer):
                 'destination_account_number': 'Invalid account number.'
             })
 
-        if not self.receiver_bank.is_active:
+        if not receiver_bank.is_active:
             raise serializers.ValidationError({
                 'receiver': 'Bank account is blocked or inactive.'
             })
@@ -137,23 +128,16 @@ class TransferTransactionSerializer(serializers.Serializer):
         sender_bank = BankInformation.objects.select_for_update().get(
             pk=sender.bankinformation.pk,
         )
-        if sender_bank.total_balance < attrs.get('amount'):
+        if sender_bank.total_balance < amount.get('amount'):
             raise serializers.ValidationError({
                 'amount': 'Insufficient funds.'
             })
-
-        return attrs
-
-    @transaction.atomic
-    def create(self, validated_data):
-        sender = validated_data.get('sender')
-        amount = validated_data.get('amount')
 
         # Bank statement for sender.
         statement_sender = BankStatement()
         statement_sender.bank_info = sender.bankinformation
         statement_sender.sender = sender
-        statement_sender.receiver = self.receiver_bank.holder
+        statement_sender.receiver = receiver_bank.holder
         statement_sender.amount = amount
         statement_sender.is_debit = True
         statement_sender.description = 'Amount transferred'
@@ -161,9 +145,9 @@ class TransferTransactionSerializer(serializers.Serializer):
 
         # Bank statement for receiver.
         statement_receiver = BankStatement()
-        statement_receiver.bank_info = self.receiver_bank
+        statement_receiver.bank_info = receiver_bank
         statement_receiver.sender = sender
-        statement_receiver.receiver = self.receiver_bank.holder
+        statement_receiver.receiver = receiver_bank.holder
         statement_receiver.amount = amount
         statement_receiver.is_debit = False
         statement_receiver.description = 'Amount received'
