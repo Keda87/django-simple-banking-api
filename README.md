@@ -8,31 +8,27 @@ Built on top of python stack using Django, Gunicorn, PostgreSQL and Nginx
 
 - Build docker image
  ```sh
-    $ docker-compose build
+    $ make build
  ```
 
 - Start banking system service
  ```sh
-    $ ./start-service.sh -s
+    $ make start
  ```
- _Note: If you are facing 'Permission denied' error when executing the above command, then re-run the command after granting executable permissions to the 'start-service.sh' file_
-   ```sh
-      $ chmod +x ./start-service.sh
-   ```
 
 - Stop banking system service
  ```sh
-    $ ./start-service.sh -k
+    $ make stop
  ```
 
 - Run tests for this project
  ```sh
-    $ ./start-service.sh -t
+    $ make test
  ```
 
-- _Note: Check out start-service shell script 'help' command for more details_
+- make command usage details
  ```sh
-     $ ./start-service.sh -h
+     $ make help
  ```
 
 ### Setup and installation (Manual):

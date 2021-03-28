@@ -11,7 +11,6 @@ services:
     - "80:80"
     networks:
       - front-net
-    container_name: reverse_proxy-container
 
   bank_api:
     build: .
@@ -24,7 +23,6 @@ services:
     networks:
       - back-net
       - front-net
-    container_name: bank_api-container
 
   bank_db:
     image: postgres:9.6-alpine
@@ -37,7 +35,6 @@ services:
       - back-net
     environment:
       - POSTGRES_PASSWORD=testing
-    container_name: bank_db-container
 
 networks:
   back-net:
