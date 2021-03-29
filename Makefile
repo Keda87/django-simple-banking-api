@@ -1,3 +1,5 @@
+docker_exists = $(shell docker-compose exec bank_db psql --username=postgres -tAc "SELECT 1 FROM pg_database WHERE datname='db_banking'")
+
 help:
 	@echo ''
 	@echo 'Usage: make [TARGET]'
@@ -16,8 +18,9 @@ start:
 	docker-compose up -d
 
 	@echo "Creating the bank database and performing migrations..."
-	$(eval create_db=$(docker-compose exec bank_db createdb --username=postgres db_banking))
-	@if [ '$(create_db)' != '' ]; then echo 'DB already exists'; fi;
+	@if [ '$(docker_exists)' == '1' ]; \
+	then echo 'DB already exists'; \
+	else docker-compose exec bank_db createdb --username=postgres db_banking; fi
 	docker-compose exec bank_api python manage.py migrate
 	docker-compose exec bank_api python manage.py collectstatic
 	@echo "Done"
