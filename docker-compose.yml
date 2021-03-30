@@ -34,7 +34,9 @@ services:
     networks:
       - back-net
     environment:
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=testing
+      - POSTGRES_DB=db_banking
 
 networks:
   back-net:
