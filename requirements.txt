@@ -5,4 +5,4 @@ djangorestframework==3.11.2
 djangorestframework-simplejwt==4.4.0
 gunicorn==19.9.0
 psycopg2-binary==2.8.5
-PyJWT==1.6.4
+PyJWT==2.4.0
